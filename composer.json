@@ -1,0 +1,11 @@
+{
+    "name": "logger/bit",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "require": {
+        "ext-pdo": "*"
+    }
+}
