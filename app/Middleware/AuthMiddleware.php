@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Session\SessionHandler;
+
 /**
  * Class AuthMiddleware
  * @package App\Middleware
@@ -15,7 +17,8 @@ class AuthMiddleware implements MiddlewareInterface
      */
     public static function handle(array $request): void
     {
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] < 1) {
+        $userId = SessionHandler::getUserId();
+        if (!$userId || $userId < 1) {
             header('Location: /auth');
         }
     }

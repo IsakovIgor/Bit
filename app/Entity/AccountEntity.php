@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Entity;
+
+use App\Exceptions\UserHasNotAuthException;
 
 /**
  * Class AccountEntity
@@ -16,12 +19,17 @@ class AccountEntity extends AbstractEntity
     /**
      * @param int $userId
      * @return AccountEntity
+     * @throws UserHasNotAuthException
      */
-    public function findByUserId(int $userId)
+    public function findByUserIdOrFail(int $userId)
     {
-        $stmt = $this->dm->prepare('SELECT * FROM accounts WHERE user_id = :id');
-        $stmt->execute(['id' => $userId]);
-        return $stmt->fetch(\PDO::FETCH_OBJ);
+        $account = $this->dm->select('SELECT * FROM accounts WHERE user_id = :id', ['id' => $userId]);
+
+        if ($account === null) {
+            throw new UserHasNotAuthException();
+        }
+
+        return $account;
     }
 
     /**
@@ -31,27 +39,18 @@ class AccountEntity extends AbstractEntity
      */
     public function withdrawal(int $userId, float $value): bool
     {
-        try {
-            $this->dm->beginTransaction();
-
-            $stmt = $this->dm->prepare('SELECT * FROM accounts WHERE user_id = :id FOR UPDATE');
-            $stmt->execute(['id' => $userId]);
+        return $this->dm->transaction(function () use ($userId, $value) {
             /** @var AccountEntity $account */
-            $account = $stmt->fetch(\PDO::FETCH_OBJ);
+            $account = $this->dm->select('SELECT * FROM accounts WHERE user_id = :id FOR UPDATE', ['id' => $userId]);
 
-            if ($account->balance > 0) {
-                $stmt = $this->dm->prepare('UPDATE accounts SET balance = :balance WHERE user_id = :id');
-                $stmt->execute(['id' => $userId, 'balance' => $account->balance - $value]);
+            if ($account->balance - $value > 0.001) {
+                return $this->dm->update(
+                    'UPDATE accounts SET balance = :balance WHERE user_id = :id',
+                    ['id' => $userId, 'balance' => $account->balance - $value]
+                );
             }
 
-            $this->dm->commit();
-            return true;
-        } catch (\PDOException $e) {
-            $this->dm->rollBack();
-            // @todo handle
-            var_dump($e->getMessage());
-        }
-
-        return false;
+            return false;
+        });
     }
 }

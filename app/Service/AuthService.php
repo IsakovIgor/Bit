@@ -5,24 +5,19 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\UserEntity;
+use App\Session\SessionHandler;
 
 /**
  * Class AuthService
  * @package App\Service
  */
-class AuthService extends AbstractService
+class AuthService
 {
     protected UserEntity $userEntity;
 
     public function __construct()
     {
-        $db = self::getParams();
-        try {
-            $this->userEntity = new UserEntity(new \PDO($db['dsn'], $db['login'], $db['password']));
-        } catch (\PDOException $e) {
-            // @todo handle
-            var_dump($e->getMessage());
-        }
+        $this->userEntity = new UserEntity();
     }
 
     public function auth(array $request): bool
@@ -32,7 +27,7 @@ class AuthService extends AbstractService
             return false;
         }
 
-        $_SESSION['user_id'] = $user->id;
+        SessionHandler::setUserId($user->id);
 
         return true;
     }

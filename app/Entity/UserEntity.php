@@ -14,10 +14,12 @@ namespace App\Entity;
  */
 class UserEntity extends AbstractEntity
 {
+    /**
+     * @param string $email
+     * @return mixed
+     */
     public function findByEmail(string $email)
     {
-        $stmt = $this->dm->prepare('SELECT * FROM users WHERE email = :email');
-        $stmt->execute(['email' => $email]);
-        return $stmt->fetch(\PDO::FETCH_OBJ);
+        return $this->dm->select('SELECT * FROM users WHERE email = :email', ['email' => $email]);
     }
 }

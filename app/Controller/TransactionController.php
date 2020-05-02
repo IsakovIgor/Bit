@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Exceptions\NotFoundException;
 use App\Service\TransactionService;
 use App\View\View;
 
@@ -23,7 +24,7 @@ class TransactionController extends AbstractController
 
     /**
      * @param string[] $params
-     * @throws \App\Exceptions\NotFoundException
+     * @throws NotFoundException
      */
     public function index(array $params = []): void
     {
@@ -35,12 +36,12 @@ class TransactionController extends AbstractController
     /**
      * pay for something, lose your money
      *
-     * @throws \App\Exceptions\NotFoundException
+     * @throws NotFoundException
      */
     public function withdrawal(): void
     {
-        if (!$this->validate($_REQUEST, ['value' => 'required'])) {
-            $this->index(['error' => 'you should fill value']);
+        if (!$this->validate($_REQUEST, ['value' => 'required|positive'])) {
+            $this->index(['error' => 'you should fill positive float value']);
         }
 
         if ($this->service->withdrawal($_REQUEST['value'])) {

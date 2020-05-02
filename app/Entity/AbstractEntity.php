@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\DBA\DBA;
+
 /**
  * Class AbstractEntity
  * @package App\Entity
  */
 abstract class AbstractEntity
 {
-    /** @var \PDO */
-    protected \PDO $dm;
+    /** @var DBA */
+    protected DBA $dm;
 
-    public function __construct(\PDO $dm)
+    public function __construct()
     {
-        $this->dm = $dm;
+        $this->dm = DBA::create();
         $this->dm->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     }
 }

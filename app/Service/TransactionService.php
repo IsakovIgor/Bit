@@ -5,32 +5,29 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\AccountEntity;
+use App\Exceptions\UserHasNotAuthException;
+use App\Session\SessionHandler;
 
 /**
  * Class TransactionService
  * @package App\Service
  */
-class TransactionService extends AbstractService
+class TransactionService
 {
     protected AccountEntity $account;
 
     public function __construct()
     {
-        $db = self::getParams();
-        try {
-            $this->account = new AccountEntity(new \PDO($db['dsn'], $db['login'], $db['password']));
-        } catch (\PDOException $e) {
-            // @todo handle
-            var_dump($e->getMessage());
-        }
+        $this->account = new AccountEntity();
     }
 
     /**
      * @return float
+     * @throws UserHasNotAuthException
      */
     public function getCurrentBalance(): float
     {
-        $account = $this->account->findByUserId((int) $_SESSION['user_id']);
+        $account = $this->account->findByUserIdOrFail(SessionHandler::getUserId());
         return (float) $account->balance;
     }
 
@@ -40,8 +37,9 @@ class TransactionService extends AbstractService
      */
     public function withdrawal($value): bool
     {
-        if (isset($_SESSION['user_id']) && $value > 0) {
-            return $this->account->withdrawal($_SESSION['user_id'], (float) $value);
+        $userId = SessionHandler::getUserId();
+        if (!empty($userId) && $value > 0) {
+            return $this->account->withdrawal($userId, (float) $value);
         }
 
         return false;
