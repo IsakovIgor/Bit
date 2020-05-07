@@ -18,6 +18,5 @@ abstract class AbstractEntity
     public function __construct()
     {
         $this->dm = DBA::create();
-        $this->dm->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     }
 }

@@ -19,18 +19,25 @@ class DBA
     /** @var DBA|null */
     private static ?DBA $instance = null;
 
-    public static function create()
+    /**
+     * @return DBA
+     */
+    public static function create(): DBA
     {
         if (static::$instance === null) {
             $db = self::getParams();
             $pdo = new \PDO($db['dsn'], $db['login'], $db['password']);
+            $pdo->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
             static::$instance = new static($pdo);
         }
 
         return static::$instance;
     }
 
-    protected static function getParams()
+    /**
+     * @return array
+     */
+    protected static function getParams(): array
     {
         $db = $_ENV['database'];
         return [
@@ -57,20 +64,15 @@ class DBA
     /**
      * @param string $sql
      * @param array $params
-     * @param string $fetchType
+     * @param string $fetch
      * @param int|string $fetchAs
      * @return mixed
      */
-    public function select(
-        string $sql,
-        array $params = [],
-        string $fetchType = self::FETCH,
-        int $fetchAs = \PDO::FETCH_OBJ
-    )
+    public function select(string $sql, array $params = [], string $fetch = self::FETCH, int $fetchAs = \PDO::FETCH_OBJ)
     {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->$fetchType($fetchAs);
+        return $stmt->$fetch($fetchAs);
     }
 
     /**
